@@ -10,18 +10,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --bg: #0F1A0F;
-  --surface: #162016;
-  --surface2: #1E2C1E;
-  --surface3: #263326;
-  --border: #2D402D;
-  --accent: #8FBC45;
+  --bg: #1A2E1A;
+  --surface: #243824;
+  --surface2: #2E4A2E;
+  --surface3: #385A38;
+  --border: #4A6E4A;
+  --accent: #A8D95A;
   --accent2: #F5A623;
-  --text: #E8EFD8;
-  --text2: #9AAD7A;
-  --text3: #5A7055;
+  --text: #EEF5DE;
+  --text2: #AECA80;
+  --text3: #7A9E6A;
   --danger: #E05252;
-  --success: #4CAF7A;
+  --success: #5DC98A;
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -257,7 +257,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
   <div class="topbar">
     <span class="topbar-logo">AGRO<span style="color:var(--text2)">BASE</span></span>
     <div class="topbar-right">
-      <span class="badge-online">ONLINE</span>
+      
       <div class="user-chip" onclick="doLogout()">
         <div class="avatar" id="user-avatar">E</div>
         <span id="user-name">Eng.</span>
@@ -358,7 +358,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     <div id="etapa-1">
       <div class="form-section">
         <h3>📋 DADOS GERAIS</h3>
-        <div class="field-group"><label>SAFRA *</label><input id="f-safra" placeholder="Ex: 2024/2025"></div>
+        <div class="field-group"><label>SAFRA *</label>
+            <select id="f-safra">
+              <option value="">Selecionar</option>
+              <option>24/25</option>
+              <option>25/25</option>
+              <option>25/26</option>
+              <option>26/26</option>
+              <option>26/27</option>
+              <option>27/27</option>
+              <option>27/28</option>
+              <option>28/28</option>
+              <option>28/29</option>
+              <option>29/29</option>
+              <option>29/30</option>
+              <option>30/30</option>
+              <option>30/31</option>
+            </select>
+          </div>
         <div class="field-group"><label>NOME DA LAVOURA *</label><input id="f-lavoura" placeholder="Nome da lavoura"></div>
         <div class="form-row">
           <div class="field-group"><label>ESPÉCIE *</label><input id="f-especie" placeholder="Ex: Soja, Milho, Trigo"></div>
@@ -368,16 +385,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
           <div class="field-group"><label>CATEGORIA</label>
             <select id="f-categoria">
               <option value="">Selecionar</option>
-              <option>Semente Genética</option><option>Semente Básica</option>
-              <option>Semente Certificada 1ª geração</option><option>Semente Certificada 2ª geração</option>
-              <option>Semente S1</option><option>Semente S2</option>
+              <option>Genética</option><option>Básica</option>
+              <option>C1</option><option>C2</option>
+              <option>S1</option><option>S2</option>
             </select>
           </div>
           <div class="field-group"><label>FASE</label>
             <select id="f-fase">
               <option value="">Selecionar</option>
-              <option>Plantio</option><option>Desenvolvimento</option><option>Florescimento</option>
-              <option>Maturação</option><option>Colheita</option>
+              <option>Plantio</option>
             </select>
           </div>
         </div>
@@ -385,7 +401,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="form-section">
         <h3>🌍 LOCALIZAÇÃO</h3>
         <div class="form-row">
-          <div class="field-group"><label>PRODUTOR / RAZÃO SOCIAL</label><input id="f-produtor" placeholder="Nome do produtor"></div>
+          <div class="field-group">
+            <label>TIPO</label>
+            <select id="f-tipo-pessoa" onchange="document.getElementById('f-produtor-label').textContent=this.value==='Cooperado'?'COOPERADO':'PRODUTOR / RAZÃO SOCIAL'">
+              <option>Produtor</option>
+              <option>Cooperado</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label id="f-produtor-label">PRODUTOR / RAZÃO SOCIAL</label>
+            <input id="f-produtor" placeholder="Nome">
+          </div>
           <div class="field-group"><label>UF</label>
             <select id="f-uf">
               <option value="">UF</option>
@@ -402,7 +428,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <div class="field-group">
           <label>LOCALIZAÇÃO GPS</label>
           <div class="gps-field">
-            <div class="field-group" style="flex:1;margin:0"><input id="f-gps" placeholder="Latitude, Longitude" readonly></div>
+            <div class="field-group" style="flex:1;margin:0">
+              <input id="f-gps-s" placeholder="S (ex: 28.123456)" oninput="syncGPS()">
+            </div>
+            <div class="field-group" style="flex:1;margin:0">
+              <input id="f-gps-w" placeholder="W (ex: 52.654321)" oninput="syncGPS()">
+            </div>
             <button class="btn btn-secondary" onclick="getGPS()" style="white-space:nowrap">📍 GPS</button>
           </div>
         </div>
@@ -442,6 +473,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="form-section">
         <h3>✍️ ASSINATURA DO ENGENHEIRO</h3>
         <div class="field-group"><label>NOME COMPLETO</label><input id="f-eng-nome" placeholder="Nome do engenheiro agrônomo"></div>
+        <div class="field-group"><label>DATA</label><input id="f-eng-data" type="date"></div>
         <div class="field-group">
           <label>ASSINATURA DIGITAL</label>
           <div class="sig-container">
@@ -472,15 +504,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
       <div class="field-group"><label>CATEGORIA</label>
         <select id="m-categoria">
           <option value="">Selecionar</option>
-          <option>Semente Básica</option><option>Semente Certificada 1ª</option>
-          <option>Semente Certificada 2ª</option><option>Semente S1</option><option>Semente S2</option>
+          <option>Básica</option><option>C1</option>
+          <option>C2</option><option>S1</option><option>S2</option>
         </select>
       </div>
       <div class="field-group"><label>LOTE</label><input id="m-lote" placeholder="Nº do lote"></div>
     </div>
     <div class="form-row">
       <div class="field-group"><label>QUANTIDADE (kg)</label><input id="m-qtd" type="number" placeholder="0"></div>
-      <div class="field-group"><label>ORIGEM</label><input id="m-origem" placeholder="Produtor/empresa"></div>
+
     </div>
     <div class="form-row">
       <div class="field-group"><label>Nº NOTA FISCAL</label><input id="m-nf" placeholder="Nº NF"></div>
@@ -523,6 +555,7 @@ function doLogin(){
   document.getElementById('user-name').textContent=user.nome.split(' ')[0];
   document.getElementById('user-avatar').textContent=user.initials;
   setGreeting();showScreen('app');showTab('dashboard');renderDashboard();
+  const engNomeEl=document.getElementById('f-eng-nome');if(engNomeEl)engNomeEl.value=user.nome;
 }
 function doLogout(){currentUser=null;localStorage.removeItem('agrobase_user');showScreen('login');}
 window.addEventListener('load',()=>{
@@ -537,7 +570,7 @@ function showTab(tab){
   const nav=document.getElementById('nav-'+tab);if(nav)nav.classList.add('active');
   if(tab==='dashboard')renderDashboard();if(tab==='projetos')renderProjetos();showScreen('app');
 }
-function showNovoProjeto(){editingId=null;materials=[];clearAllFields();goStep(1);showScreen('form');document.getElementById('form-title-label').textContent='NOVO PROJETO';document.getElementById('form-id-label').textContent='';renderMaterials();initSignatures();}
+function showNovoProjeto(){editingId=null;materials=[];clearAllFields();goStep(1);showScreen('form');document.getElementById('form-title-label').textContent='NOVO PROJETO';document.getElementById('form-id-label').textContent='';renderMaterials();initSignatures();const engNomeEl=document.getElementById('f-eng-nome');if(engNomeEl&&currentUser)engNomeEl.value=currentUser.nome;}
 function voltarApp(){showScreen('app');showTab('dashboard');}
 function setGreeting(){
   const h=new Date().getHours(),g=h<12?'BOM DIA':h<18?'BOA TARDE':'BOA NOITE',nome=currentUser?.nome?.split(' ')[0]?.toUpperCase()||'ENG.';
@@ -576,17 +609,28 @@ function goStep(n){
 function getGPS(){
   if(!navigator.geolocation){showToast('GPS não disponível neste dispositivo');return;}
   showToast('📍 Obtendo localização...');
-  navigator.geolocation.getCurrentPosition(pos=>{document.getElementById('f-gps').value=`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;showToast('📍 Localização obtida!');},()=>showToast('❌ Não foi possível obter GPS'));
+  navigator.geolocation.getCurrentPosition(pos=>{
+    document.getElementById('f-gps-s').value=pos.coords.latitude.toFixed(6);
+    document.getElementById('f-gps-w').value=Math.abs(pos.coords.longitude).toFixed(6);
+    syncGPS();
+    showToast('📍 Localização obtida!');
+  },()=>showToast('❌ Não foi possível obter GPS'));
+}
+function syncGPS(){
+  const s=document.getElementById('f-gps-s').value.trim();
+  const w=document.getElementById('f-gps-w').value.trim();
+  const hidden=document.getElementById('f-gps');
+  if(hidden) hidden.value=`S ${s} W ${w}`;
 }
 function openMaterialModal(idx=null){
   editMaterialIdx=idx;const m=idx!==null?materials[idx]:{};
   document.getElementById('modal-mat-title').textContent=idx!==null?'EDITAR MATERIAL':'ADICIONAR MATERIAL';
-  ['categoria','lote','qtd','origem','nf','nf-data','doc','doc-data','renasem'].forEach(f=>{const el=document.getElementById('m-'+f);if(el)el.value=m[f]||'';});
+  ['categoria','lote','qtd','nf','nf-data','doc','doc-data','renasem'].forEach(f=>{const el=document.getElementById('m-'+f);if(el)el.value=m[f]||'';});
   document.getElementById('modal-material').classList.add('open');
 }
 function closeMaterialModal(){document.getElementById('modal-material').classList.remove('open');editMaterialIdx=null;}
 function saveMaterial(){
-  const m={};['categoria','lote','qtd','origem','nf','nf-data','doc','doc-data','renasem'].forEach(f=>{const el=document.getElementById('m-'+f);if(el)m[f]=el.value;});
+  const m={};['categoria','lote','qtd','nf','nf-data','doc','doc-data','renasem'].forEach(f=>{const el=document.getElementById('m-'+f);if(el)m[f]=el.value;});
   if(!m.lote&&!m.categoria){showToast('Preencha pelo menos Categoria ou Lote');return;}
   if(editMaterialIdx!==null)materials[editMaterialIdx]=m;else materials.push(m);
   renderMaterials();closeMaterialModal();showToast('✅ Material salvo');
@@ -614,7 +658,7 @@ function stopDraw(id){const c=sigCtx[id];if(c)c.drawing=false;}
 function clearSig(id){const canvas=document.getElementById('sig-'+id);const c=sigCtx[id];if(!c)return;c.ctx.fillStyle='#1E2C1E';c.ctx.fillRect(0,0,canvas.width,canvas.height);c.empty=true;}
 function getSigData(id){const c=sigCtx[id];if(!c||c.empty)return null;return document.getElementById('sig-'+id).toDataURL();}
 function v(id){const el=document.getElementById(id);return el?el.value:'';}
-function collectFormData(){return{safra:v('f-safra'),numero:v('f-numero'),lavoura:v('f-lavoura'),especie:v('f-especie'),cultivar:v('f-cultivar'),categoria:v('f-categoria'),fase:v('f-fase'),produtor:v('f-produtor'),uf:v('f-uf'),municipio:v('f-municipio'),gps:v('f-gps'),area:v('f-area'),plantio:v('f-plantio'),obs:v('f-obs'),engNome:v('f-eng-nome'),engCrea:v('f-eng-crea'),prodNome:v('f-prod-nome'),prodDoc:v('f-prod-doc'),sigEng:getSigData('eng'),sigProd:getSigData('prod'),materials:[...materials]};}
+function collectFormData(){return{safra:v('f-safra'),numero:v('f-numero'),lavoura:v('f-lavoura'),especie:v('f-especie'),cultivar:v('f-cultivar'),categoria:v('f-categoria'),fase:v('f-fase'),tipoPessoa:v('f-tipo-pessoa'),produtor:v('f-produtor'),uf:v('f-uf'),municipio:v('f-municipio'),gps:(()=>{const s=document.getElementById('f-gps-s')?.value||'';const w=document.getElementById('f-gps-w')?.value||'';return s||w?`S ${s} W ${w}`:'';})(),area:v('f-area'),plantio:v('f-plantio'),obs:v('f-obs'),engNome:v('f-eng-nome'),engData:v('f-eng-data'),engCrea:v('f-eng-crea'),prodNome:v('f-prod-nome'),prodDoc:v('f-prod-doc'),sigEng:getSigData('eng'),sigProd:getSigData('prod'),materials:[...materials]};}
 function setFormData(p){['safra','numero','lavoura','especie','cultivar','categoria','fase','produtor','uf','municipio','gps','area','plantio','obs','engNome','engCrea','prodNome','prodDoc'].forEach((f,i)=>{const ids=['f-safra','f-numero','f-lavoura','f-especie','f-cultivar','f-categoria','f-fase','f-produtor','f-uf','f-municipio','f-gps','f-area','f-plantio','f-obs','f-eng-nome','f-eng-crea','f-prod-nome','f-prod-doc'];const el=document.getElementById(ids[i]);if(el)el.value=p[f]||'';});}
 function clearAllFields(){document.querySelectorAll('#screen-form input, #screen-form select, #screen-form textarea').forEach(el=>el.value='');}
 function saveRascunho(){const data=collectFormData();data.status='rascunho';saveProjeto(data);showToast('💾 Rascunho salvo!');}
@@ -688,9 +732,9 @@ function exportExcelById(id){const p=projetos.find(x=>x.id===id);if(p)_exportExc
 function _exportExcel(d){
   const wb=XLSX.utils.book_new();
   const headers=['NOME DA LAVOURA','COOPERADO','CULTIVAR','AREA','KG SEMENTES','LOTE','CAT P','N CERTIFICADO','DATA CERT','N DANFE','DATA DANFE','FINAL PLANTIO','PROPRIEDADE','MUNICIPIO','COORDENADAS S','COORDENADAS W','OBSERVACAO'];
-  const gps=(d.gps||'').split(',');
-  const coordS=(gps[0]||'').trim();
-  const coordW=(gps[1]||'').trim();
+  const gpsStr=d.gps||'';
+  const coordS=gpsStr.replace(/S\s*/i,'').split(/W/i)[0].trim();
+  const coordW=gpsStr.split(/W\s*/i)[1]?.trim()||'';
   const mats=d.materials&&d.materials.length?d.materials:[{}];
   const rows=mats.map(m=>[
     d.lavoura||'',
