@@ -216,7 +216,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
     onSnapshot(collection(db, "projetos"), (snapshot) => {
       const remote = [];
       snapshot.forEach(d => remote.push({id: d.id, ...d.data()}));
-      projetos = remote;
+      const u = JSON.parse(localStorage.getItem('agrobase_user')||'{}');
+      projetos = u.role==='admin' ? remote : remote.filter(p=>p.owner===u.email);
       localStorage.setItem('agrobase_projetos', JSON.stringify(projetos));
       if(document.getElementById('tab-dashboard') && document.getElementById('tab-dashboard').style.display !== 'none') renderDashboard();
       if(document.getElementById('tab-projetos') && document.getElementById('tab-projetos').style.display !== 'none') renderProjetos();
@@ -544,7 +545,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
 
 <script>
 let currentUser=null,projetos=JSON.parse(localStorage.getItem('agrobase_projetos')||'[]'),materials=[],editingId=null,editMaterialIdx=null,deleteId=null,filterValue='todos',sigCtx={};
-const USERS=[{email:'teste',senha:'12345',nome:'Eng. Demo',initials:'E'}];
+const USERS=[
+  {email:'admin',senha:'scv',nome:'Administrador',initials:'A',role:'admin'},
+  {email:'joelmar',senha:'scv1',nome:'Joelmar',initials:'J',role:'eng'},
+  {email:'delemar',senha:'scv2',nome:'Delemar',initials:'D',role:'eng'},
+  {email:'guido',senha:'scv3',nome:'Guido',initials:'G',role:'eng'},
+  {email:'leandro',senha:'scv4',nome:'Leandro',initials:'L',role:'eng'},
+];
 
 function fillDemo(){document.getElementById('login-email').value='teste';document.getElementById('login-senha').value='12345';}
 function doLogin(){
@@ -560,7 +567,11 @@ function doLogin(){
 function doLogout(){currentUser=null;localStorage.removeItem('agrobase_user');showScreen('login');}
 window.addEventListener('load',()=>{
   const u=localStorage.getItem('agrobase_user');
-  if(u){currentUser=JSON.parse(u);document.getElementById('user-name').textContent=currentUser.nome.split(' ')[0];document.getElementById('user-avatar').textContent=currentUser.initials;setGreeting();showScreen('app');showTab('dashboard');renderDashboard();}
+  if(u){currentUser=JSON.parse(u);document.getElementById('user-name').textContent=currentUser.nome.split(' ')[0];document.getElementById('user-avatar').textContent=currentUser.initials;
+  // filter local projetos by owner
+  const allProj=JSON.parse(localStorage.getItem('agrobase_projetos')||'[]');
+  projetos=currentUser.role==='admin'?allProj:allProj.filter(p=>p.owner===currentUser.email);
+  setGreeting();showScreen('app');showTab('dashboard');renderDashboard();}
 });
 function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
 function showTab(tab){
@@ -666,6 +677,7 @@ function concluirProjeto(){const data=collectFormData();if(!data.especie){showTo
 function saveProjeto(data){
   const now=new Date().toLocaleDateString('pt-BR');
   let id = editingId;
+  data.owner = currentUser.email;
   if(editingId){
     const idx=projetos.findIndex(p=>p.id===editingId);
     if(idx>=0)projetos[idx]={...projetos[idx],...data,updatedAt:now};
