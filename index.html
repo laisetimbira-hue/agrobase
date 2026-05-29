@@ -288,6 +288,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
         <div class="qa-title">PROJETOS SALVOS</div>
         <div class="qa-sub">Ver todos os registros</div>
       </div>
+      <div class="qa-btn" onclick="exportAllExcel()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <div class="qa-title">EXPORTAR TUDO</div>
+        <div class="qa-sub">Excel com todos os projetos</div>
+      </div>
     </div>
     <div class="section-title">RECENTES</div>
     <div id="dash-recentes" class="project-list"></div>
@@ -741,6 +746,46 @@ function _exportPDF(d){
 }
 function exportExcel(){_exportExcel(getProjetoData());}
 function exportExcelById(id){const p=projetos.find(x=>x.id===id);if(p)_exportExcel(p);}
+function exportAllExcel(){
+  const wb=XLSX.utils.book_new();
+  const headers=['NOME DA LAVOURA','COOPERADO','CULTIVAR','AREA','KG SEMENTES','LOTE','CAT P','N CERTIFICADO','DATA CERT','N DANFE','DATA DANFE','FINAL PLANTIO','PROPRIEDADE','MUNICIPIO','COORDENADAS S','COORDENADAS W','OBSERVACAO','SAFRA','ENGENHEIRO','DATA VISITA'];
+  const allRows=[];
+  projetos.forEach(d=>{
+    const gpsStr=d.gps||'';
+    const coordS=gpsStr.replace(/S\s*/i,'').split(/W/i)[0].trim();
+    const coordW=gpsStr.split(/W\s*/i)[1]?.trim()||'';
+    const mats=d.materials&&d.materials.length?d.materials:[{}];
+    mats.forEach(m=>{
+      allRows.push([
+        d.lavoura||'',
+        d.produtor||'',
+        d.cultivar||'',
+        d.area||'',
+        m.qtd||'',
+        m.lote||'',
+        m.categoria||d.categoria||'',
+        m.doc||'',
+        m['doc-data']||'',
+        m.nf||'',
+        m['nf-data']||'',
+        d.plantio||'',
+        d.municipio||'',
+        d.municipio||'',
+        coordS,
+        coordW,
+        d.obs||'',
+        d.safra||'',
+        d.engNome||'',
+        d.engData||''
+      ]);
+    });
+  });
+  const ws=XLSX.utils.aoa_to_sheet([headers,...allRows]);
+  ws['!cols']=headers.map(()=>({wch:20}));
+  XLSX.utils.book_append_sheet(wb,ws,'COOPERADOS');
+  XLSX.writeFile(wb,`AgroBase_Todos_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
+  showToast('📊 Excel geral exportado!');
+}
 function _exportExcel(d){
   const wb=XLSX.utils.book_new();
   const headers=['NOME DA LAVOURA','COOPERADO','CULTIVAR','AREA','KG SEMENTES','LOTE','CAT P','N CERTIFICADO','DATA CERT','N DANFE','DATA DANFE','FINAL PLANTIO','PROPRIEDADE','MUNICIPIO','COORDENADAS S','COORDENADAS W','OBSERVACAO'];
