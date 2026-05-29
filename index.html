@@ -186,6 +186,42 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-si
   .quick-actions{grid-template-columns:1fr}
 }
 </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBsQuk8ofsjl06LTWI3fNMTeTZ24d_uq3I",
+      authDomain: "agrobase-88e73.firebaseapp.com",
+      projectId: "agrobase-88e73",
+      storageBucket: "agrobase-88e73.firebasestorage.app",
+      messagingSenderId: "329336939579",
+      appId: "1:329336939579:web:8bcb253b8eee6e8607e81e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Expose db functions globally
+    window._db = db;
+    window._fbCollection = collection;
+    window._fbDoc = doc;
+    window._fbSetDoc = setDoc;
+    window._fbGetDocs = getDocs;
+    window._fbDeleteDoc = deleteDoc;
+    window._fbOnSnapshot = onSnapshot;
+    window._fbReady = true;
+
+    // Listen for real-time updates
+    onSnapshot(collection(db, "projetos"), (snapshot) => {
+      const remote = [];
+      snapshot.forEach(d => remote.push({id: d.id, ...d.data()}));
+      projetos = remote;
+      localStorage.setItem('agrobase_projetos', JSON.stringify(projetos));
+      if(document.getElementById('tab-dashboard') && document.getElementById('tab-dashboard').style.display !== 'none') renderDashboard();
+      if(document.getElementById('tab-projetos') && document.getElementById('tab-projetos').style.display !== 'none') renderProjetos();
+    });
+  </script>
 </head>
 <body>
 
@@ -585,13 +621,35 @@ function saveRascunho(){const data=collectFormData();data.status='rascunho';save
 function concluirProjeto(){const data=collectFormData();if(!data.especie){showToast('Preencha ao menos a Espécie');goStep(1);return;}data.status='concluido';saveProjeto(data);showToast('✅ Projeto concluído!');voltarApp();}
 function saveProjeto(data){
   const now=new Date().toLocaleDateString('pt-BR');
-  if(editingId){const idx=projetos.findIndex(p=>p.id===editingId);if(idx>=0)projetos[idx]={...projetos[idx],...data,updatedAt:now};}
-  else{const id='proj_'+Date.now();projetos.push({id,...data,createdAt:now,updatedAt:now});editingId=id;}
+  let id = editingId;
+  if(editingId){
+    const idx=projetos.findIndex(p=>p.id===editingId);
+    if(idx>=0)projetos[idx]={...projetos[idx],...data,updatedAt:now};
+  } else {
+    id='proj_'+Date.now();
+    projetos.push({id,...data,createdAt:now,updatedAt:now});
+    editingId=id;
+  }
   localStorage.setItem('agrobase_projetos',JSON.stringify(projetos));
+  // Save to Firebase
+  if(window._fbReady){
+    const proj = projetos.find(p=>p.id===id)||{};
+    // Remove signature data (too large for Firestore)
+    const toSave = {...proj};
+    delete toSave.sigEng;
+    window._fbSetDoc(window._fbDoc(window._db,'projetos',id), toSave).catch(e=>console.error('Firebase save error:',e));
+  }
 }
 function editProjeto(id){const p=projetos.find(x=>x.id===id);if(!p)return;editingId=id;materials=[...(p.materials||[])];clearAllFields();setFormData(p);renderMaterials();goStep(1);showScreen('form');document.getElementById('form-title-label').textContent='EDITAR PROJETO';document.getElementById('form-id-label').textContent='ID: '+id;initSignatures();}
 function askDelete(id){deleteId=id;document.getElementById('modal-delete').classList.add('open');}
-function confirmDelete(){projetos=projetos.filter(p=>p.id!==deleteId);localStorage.setItem('agrobase_projetos',JSON.stringify(projetos));closeModal('modal-delete');renderProjetos();renderDashboard();showToast('🗑 Projeto excluído');}
+function confirmDelete(){
+  if(window._fbReady){
+    window._fbDeleteDoc(window._fbDoc(window._db,'projetos',deleteId)).catch(e=>console.error('Firebase delete error:',e));
+  }
+  projetos=projetos.filter(p=>p.id!==deleteId);
+  localStorage.setItem('agrobase_projetos',JSON.stringify(projetos));
+  closeModal('modal-delete');renderProjetos();renderDashboard();showToast('🗑 Projeto excluído');
+}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function renderResumo(){
   const d=collectFormData();
