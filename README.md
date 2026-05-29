@@ -1,1 +1,668 @@
-# agrobase
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroBase — Gestão de Campo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #0F1A0F;
+  --surface: #162016;
+  --surface2: #1E2C1E;
+  --surface3: #263326;
+  --border: #2D402D;
+  --accent: #8FBC45;
+  --accent2: #F5A623;
+  --text: #E8EFD8;
+  --text2: #9AAD7A;
+  --text3: #5A7055;
+  --danger: #E05252;
+  --success: #4CAF7A;
+  --font-head: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --radius: 6px;
+  --shadow: 0 4px 24px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* ── LOGIN ── */
+#screen-login{justify-content:center;align-items:center;background:
+  radial-gradient(ellipse at 20% 80%, #1B3A1B 0%, transparent 50%),
+  radial-gradient(ellipse at 80% 20%, #0D250D 0%, transparent 50%),
+  var(--bg);}
+.login-box{width:100%;max-width:400px;padding:20px}
+.login-logo{text-align:center;margin-bottom:40px}
+.login-logo .logo-mark{font-family:var(--font-head);font-size:52px;font-weight:800;letter-spacing:-2px;color:var(--accent);line-height:1}
+.login-logo .logo-sub{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:4px;margin-top:4px}
+.login-logo .logo-line{width:40px;height:2px;background:var(--accent);margin:12px auto 0}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px}
+.login-card h2{font-family:var(--font-head);font-size:26px;font-weight:700;margin-bottom:6px}
+.login-card p{color:var(--text3);font-size:13px;margin-bottom:28px}
+.field-group{margin-bottom:18px}
+.field-group label{display:block;font-family:var(--font-mono);font-size:11px;color:var(--text2);letter-spacing:1px;margin-bottom:8px}
+.field-group input, .field-group select, .field-group textarea{
+  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
+  color:var(--text);font-family:var(--font-body);font-size:14px;padding:11px 14px;outline:none;transition:.2s
+}
+.field-group input:focus,.field-group select:focus,.field-group textarea:focus{border-color:var(--accent);background:var(--surface3)}
+.field-group select option{background:var(--surface2)}
+.field-group textarea{resize:vertical;min-height:80px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:var(--radius);border:none;cursor:pointer;font-family:var(--font-head);font-size:15px;font-weight:600;letter-spacing:.5px;transition:.2s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#0F1A0F;width:100%;justify-content:center}
+.btn-primary:hover{background:#a0cc55;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--surface3);border-color:var(--text3)}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.btn-danger:hover{background:rgba(224,82,82,.1)}
+.btn-accent2{background:var(--accent2);color:#0F1A0F}
+.btn-accent2:hover{background:#f7b840}
+.btn-sm{padding:7px 14px;font-size:13px}
+.btn-icon{padding:8px;background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-icon:hover{color:var(--text);border-color:var(--text2)}
+.login-demo{text-align:center;margin-top:16px;font-size:12px;color:var(--text3);font-family:var(--font-mono)}
+.login-demo span{color:var(--accent);cursor:pointer}
+.login-demo span:hover{text-decoration:underline}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-1px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.badge-online{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--success)}
+.badge-online::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 14px 5px 5px;cursor:pointer;font-size:13px;color:var(--text2)}
+.user-chip:hover{border-color:var(--text3)}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:700;color:#0F1A0F}
+
+/* ── NAV ── */
+.bottom-nav{display:flex;background:var(--surface);border-top:1px solid var(--border);position:sticky;bottom:0;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;cursor:pointer;color:var(--text3);transition:.2s;font-family:var(--font-mono);font-size:10px;gap:4px;border:none;background:none}
+.nav-item:hover,.nav-item.active{color:var(--accent)}
+.nav-item svg{width:20px;height:20px}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:20px}
+
+/* ── DASHBOARD ── */
+.dash-header{margin-bottom:24px}
+.dash-header h1{font-family:var(--font-head);font-size:32px;font-weight:800;line-height:1}
+.dash-header p{color:var(--text3);font-size:13px;font-family:var(--font-mono);margin-top:4px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-card .val{font-family:var(--font-head);font-size:36px;font-weight:800;color:var(--accent);line-height:1}
+.stat-card .lbl{font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:1px;margin-top:4px}
+.section-title{font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--text2);letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:3px;height:16px;background:var(--accent);border-radius:2px}
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.qa-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 16px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:.2s;text-align:left}
+.qa-btn:hover{border-color:var(--accent);background:var(--surface2)}
+.qa-btn svg{color:var(--accent);width:22px;height:22px}
+.qa-btn .qa-title{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)}
+.qa-btn .qa-sub{font-size:12px;color:var(--text3)}
+.project-list{display:flex;flex-direction:column;gap:10px}
+.proj-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:.2s}
+.proj-card:hover{border-color:var(--text3);background:var(--surface2)}
+.proj-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.proj-title{font-family:var(--font-head);font-size:17px;font-weight:700}
+.proj-badge{font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:12px;letter-spacing:.5px}
+.badge-rascunho{background:rgba(245,166,35,.15);color:var(--accent2);border:1px solid rgba(245,166,35,.3)}
+.badge-concluido{background:rgba(76,175,122,.15);color:var(--success);border:1px solid rgba(76,175,122,.3)}
+.badge-revisao{background:rgba(143,188,69,.15);color:var(--accent);border:1px solid rgba(143,188,69,.3)}
+.proj-meta{display:flex;gap:16px;font-family:var(--font-mono);font-size:11px;color:var(--text3)}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-state svg{width:48px;height:48px;margin-bottom:16px;color:var(--text3);opacity:.5}
+.empty-state p{font-family:var(--font-head);font-size:18px;color:var(--text2)}
+.empty-state small{font-size:13px;color:var(--text3)}
+
+/* ── FORM ── */
+.form-header{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.back-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;font-size:13px;font-family:var(--font-body)}
+.back-btn:hover{border-color:var(--text);color:var(--text)}
+.form-title{font-family:var(--font-head);font-size:26px;font-weight:800}
+
+.steps{display:flex;align-items:center;margin-bottom:28px;gap:0}
+.step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;cursor:pointer}
+.step:not(:last-child)::after{content:'';position:absolute;top:16px;left:50%;width:100%;height:2px;background:var(--border);z-index:0;transform:translateX(0)}
+.step.done:not(:last-child)::after,.step.active:not(:last-child)::after{background:var(--accent)}
+.step-dot{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--text3);z-index:1;transition:.2s}
+.step.active .step-dot{border-color:var(--accent);background:var(--accent);color:#0F1A0F;font-weight:700}
+.step.done .step-dot{border-color:var(--accent);background:var(--accent);color:#0F1A0F}
+.step-label{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:6px;text-align:center;letter-spacing:.5px}
+.step.active .step-label{color:var(--accent)}
+
+.form-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.form-section h3{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text2);letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row.cols3{grid-template-columns:1fr 1fr 1fr}
+.form-full{grid-column:1/-1}
+.gps-field{display:flex;gap:8px;align-items:flex-end}
+.gps-field .field-group{flex:1;margin:0}
+.gps-field button{flex-shrink:0}
+
+.material-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.material-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.material-item-info{flex:1}
+.material-item-info strong{font-family:var(--font-head);font-size:15px;display:block}
+.material-item-info small{font-family:var(--font-mono);font-size:11px;color:var(--text3)}
+.material-actions{display:flex;gap:6px}
+
+.sig-container{background:var(--surface2);border:1px dashed var(--border);border-radius:var(--radius);overflow:hidden;position:relative}
+.sig-canvas{display:block;touch-action:none;cursor:crosshair;width:100%}
+.sig-toolbar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-top:1px solid var(--border)}
+.sig-label{font-family:var(--font-mono);font-size:11px;color:var(--text3)}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px}
+.modal h3{font-family:var(--font-head);font-size:22px;font-weight:700;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface3);border:1px solid var(--accent);border-radius:6px;padding:10px 20px;font-family:var(--font-mono);font-size:12px;color:var(--accent);opacity:0;transition:.3s;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.search-bar{display:flex;gap:10px;margin-bottom:16px}
+.search-bar input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:10px 14px;font-family:var(--font-body);font-size:14px;outline:none}
+.search-bar input:focus{border-color:var(--accent)}
+.filter-chips{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.chip{font-family:var(--font-mono);font-size:11px;padding:5px 12px;border-radius:12px;border:1px solid var(--border);cursor:pointer;color:var(--text3);background:transparent;transition:.2s}
+.chip.active,.chip:hover{border-color:var(--accent);color:var(--accent)}
+.proj-card-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+@media(max-width:480px){
+  .form-row,.form-row.cols3{grid-template-columns:1fr}
+  .quick-actions{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-mark">AGRO<br>BASE</div>
+      <div class="logo-line"></div>
+      <div class="logo-sub">GESTÃO DE CAMPO</div>
+    </div>
+    <div class="login-card">
+      <h2>Entrar</h2>
+      <p>Sistema de lavouras de sementes</p>
+      <div class="field-group">
+        <label>USUÁRIO</label>
+        <input type="text" id="login-email" placeholder="Nome de usuário">
+      </div>
+      <div class="field-group">
+        <label>SENHA</label>
+        <input type="password" id="login-senha" placeholder="••••••">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">ACESSAR →</button>
+    </div>
+    <div class="login-demo">Demo: <span onclick="fillDemo()">teste / 12345</span></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="screen-app">
+  <div class="topbar">
+    <span class="topbar-logo">AGRO<span style="color:var(--text2)">BASE</span></span>
+    <div class="topbar-right">
+      <span class="badge-online">ONLINE</span>
+      <div class="user-chip" onclick="doLogout()">
+        <div class="avatar" id="user-avatar">E</div>
+        <span id="user-name">Eng.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content" id="tab-dashboard">
+    <div class="dash-header">
+      <h1 id="dash-greeting">BOM DIA,<br>ENGENHEIRO</h1>
+      <p id="dash-date"></p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="val" id="stat-total">0</div><div class="lbl">TOTAL</div></div>
+      <div class="stat-card"><div class="val" id="stat-concluidos">0</div><div class="lbl">CONCLUÍDOS</div></div>
+      <div class="stat-card"><div class="val" id="stat-rascunhos">0</div><div class="lbl">RASCUNHOS</div></div>
+    </div>
+    <div class="section-title">AÇÕES RÁPIDAS</div>
+    <div class="quick-actions">
+      <div class="qa-btn" onclick="showNovoProjeto()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <div class="qa-title">NOVO PROJETO</div>
+        <div class="qa-sub">Iniciar coleta de campo</div>
+      </div>
+      <div class="qa-btn" onclick="showTab('projetos')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <div class="qa-title">PROJETOS SALVOS</div>
+        <div class="qa-sub">Ver todos os registros</div>
+      </div>
+    </div>
+    <div class="section-title">RECENTES</div>
+    <div id="dash-recentes" class="project-list"></div>
+  </div>
+
+  <div class="content" id="tab-projetos" style="display:none">
+    <div class="dash-header">
+      <h1>PROJETOS</h1>
+      <p style="font-family:var(--font-mono);font-size:12px;color:var(--text3)" id="proj-count-label"></p>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Buscar por cultura, safra, lote..." oninput="renderProjetos()">
+    </div>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="todos" onclick="setFilter(this,'todos')">TODOS</button>
+      <button class="chip" data-filter="rascunho" onclick="setFilter(this,'rascunho')">RASCUNHO</button>
+      <button class="chip" data-filter="revisao" onclick="setFilter(this,'revisao')">EM REVISÃO</button>
+      <button class="chip" data-filter="concluido" onclick="setFilter(this,'concluido')">CONCLUÍDO</button>
+    </div>
+    <div id="projetos-list" class="project-list"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-dashboard" onclick="showTab('dashboard')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      INÍCIO
+    </button>
+    <button class="nav-item" id="nav-projetos" onclick="showTab('projetos')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      PROJETOS
+    </button>
+    <button class="nav-item" onclick="showNovoProjeto()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      NOVO
+    </button>
+  </nav>
+</div>
+
+<!-- FORM -->
+<div class="screen" id="screen-form">
+  <div class="topbar">
+    <span class="topbar-logo">AGRO<span style="color:var(--text2)">BASE</span></span>
+    <div class="topbar-right">
+      <button class="btn btn-secondary btn-sm" onclick="saveRascunho()">💾 RASCUNHO</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="form-header">
+      <button class="back-btn" onclick="voltarApp()">← Voltar</button>
+      <div>
+        <div class="form-title" id="form-title-label">NOVO PROJETO</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3)" id="form-id-label"></div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step active" id="step-1" onclick="goStep(1)">
+        <div class="step-dot">1</div><div class="step-label">DADOS</div>
+      </div>
+      <div class="step" id="step-2" onclick="goStep(2)">
+        <div class="step-dot">2</div><div class="step-label">MATERIAIS</div>
+      </div>
+      <div class="step" id="step-3" onclick="goStep(3)">
+        <div class="step-dot">3</div><div class="step-label">ASSINATURAS</div>
+      </div>
+    </div>
+
+    <!-- ETAPA 1 -->
+    <div id="etapa-1">
+      <div class="form-section">
+        <h3>📋 DADOS GERAIS</h3>
+        <div class="field-group"><label>SAFRA *</label><input id="f-safra" placeholder="Ex: 2024/2025"></div>
+        <div class="field-group"><label>NOME DA LAVOURA *</label><input id="f-lavoura" placeholder="Nome da lavoura"></div>
+        <div class="form-row">
+          <div class="field-group"><label>ESPÉCIE *</label><input id="f-especie" placeholder="Ex: Soja, Milho, Trigo"></div>
+          <div class="field-group"><label>CULTIVAR *</label><input id="f-cultivar" placeholder="Ex: BRS 360 RR"></div>
+        </div>
+        <div class="form-row">
+          <div class="field-group"><label>CATEGORIA</label>
+            <select id="f-categoria">
+              <option value="">Selecionar</option>
+              <option>Semente Genética</option><option>Semente Básica</option>
+              <option>Semente Certificada 1ª geração</option><option>Semente Certificada 2ª geração</option>
+              <option>Semente S1</option><option>Semente S2</option>
+            </select>
+          </div>
+          <div class="field-group"><label>FASE</label>
+            <select id="f-fase">
+              <option value="">Selecionar</option>
+              <option>Plantio</option><option>Desenvolvimento</option><option>Florescimento</option>
+              <option>Maturação</option><option>Colheita</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>🌍 LOCALIZAÇÃO</h3>
+        <div class="form-row">
+          <div class="field-group"><label>PRODUTOR / RAZÃO SOCIAL</label><input id="f-produtor" placeholder="Nome do produtor"></div>
+          <div class="field-group"><label>UF</label>
+            <select id="f-uf">
+              <option value="">UF</option>
+              <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option>
+              <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+              <option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option>
+              <option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+              <option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option>
+              <option>SE</option><option>TO</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group"><label>MUNICÍPIO</label><input id="f-municipio" placeholder="Cidade"></div>
+        <div class="field-group">
+          <label>LOCALIZAÇÃO GPS</label>
+          <div class="gps-field">
+            <div class="field-group" style="flex:1;margin:0"><input id="f-gps" placeholder="Latitude, Longitude" readonly></div>
+            <button class="btn btn-secondary" onclick="getGPS()" style="white-space:nowrap">📍 GPS</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field-group"><label>ÁREA (ha)</label><input id="f-area" type="number" placeholder="0.00"></div>
+          <div class="field-group"><label>DATA DE PLANTIO</label><input id="f-plantio" type="date"></div>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>📝 OBSERVAÇÕES</h3>
+        <div class="field-group"><label>OBSERVAÇÕES GERAIS</label><textarea id="f-obs" placeholder="Condições de campo, anotações técnicas..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="goStep(2)">PRÓXIMO: MATERIAIS →</button>
+      </div>
+    </div>
+
+    <!-- ETAPA 2 -->
+    <div id="etapa-2" style="display:none">
+      <div class="form-section">
+        <h3>🌾 MATERIAIS DE MULTIPLICAÇÃO</h3>
+        <div id="material-list" class="material-list"></div>
+        <button class="btn btn-secondary" style="width:100%" onclick="openMaterialModal()">+ ADICIONAR MATERIAL</button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="goStep(1)">← DADOS</button>
+        <button class="btn btn-primary" style="flex:2" onclick="goStep(3)">PRÓXIMO: ASSINATURAS →</button>
+      </div>
+    </div>
+
+    <!-- ETAPA 3 -->
+    <div id="etapa-3" style="display:none">
+      <div class="form-section" id="resumo-section">
+        <h3>📊 RESUMO DO PROJETO</h3>
+        <div id="resumo-content"></div>
+      </div>
+      <div class="form-section">
+        <h3>✍️ ASSINATURA DO ENGENHEIRO</h3>
+        <div class="field-group"><label>NOME COMPLETO</label><input id="f-eng-nome" placeholder="Nome do engenheiro agrônomo"></div>
+        <div class="field-group">
+          <label>ASSINATURA DIGITAL</label>
+          <div class="sig-container">
+            <canvas id="sig-eng" class="sig-canvas" height="120"></canvas>
+            <div class="sig-toolbar">
+              <span class="sig-label">Assine no campo acima</span>
+              <button class="btn btn-secondary btn-sm" onclick="clearSig('eng')">LIMPAR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-secondary" onclick="goStep(2)">← MATERIAIS</button>
+        <button class="btn btn-accent2" style="flex:1" onclick="exportPDF()">📄 PDF</button>
+        <button class="btn btn-secondary" onclick="exportExcel()">📊 EXCEL</button>
+        <button class="btn btn-primary" style="flex:1" onclick="concluirProjeto()">✔ CONCLUIR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MATERIAL -->
+<div class="modal-overlay" id="modal-material">
+  <div class="modal">
+    <h3 id="modal-mat-title">ADICIONAR MATERIAL</h3>
+    <div class="form-row">
+      <div class="field-group"><label>CATEGORIA</label>
+        <select id="m-categoria">
+          <option value="">Selecionar</option>
+          <option>Semente Básica</option><option>Semente Certificada 1ª</option>
+          <option>Semente Certificada 2ª</option><option>Semente S1</option><option>Semente S2</option>
+        </select>
+      </div>
+      <div class="field-group"><label>LOTE</label><input id="m-lote" placeholder="Nº do lote"></div>
+    </div>
+    <div class="form-row">
+      <div class="field-group"><label>QUANTIDADE (kg)</label><input id="m-qtd" type="number" placeholder="0"></div>
+      <div class="field-group"><label>ORIGEM</label><input id="m-origem" placeholder="Produtor/empresa"></div>
+    </div>
+    <div class="form-row">
+      <div class="field-group"><label>Nº NOTA FISCAL</label><input id="m-nf" placeholder="Nº NF"></div>
+      <div class="field-group"><label>DATA NF</label><input id="m-nf-data" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="field-group"><label>Nº DOCUMENTO</label><input id="m-doc" placeholder="Nº do documento"></div>
+      <div class="field-group"><label>DATA DOCUMENTO</label><input id="m-doc-data" type="date"></div>
+    </div>
+    <div class="field-group"><label>RENASEM</label><input id="m-renasem" placeholder="Nº RENASEM do produtor"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeMaterialModal()">CANCELAR</button>
+      <button class="btn btn-primary" onclick="saveMaterial()">SALVAR MATERIAL</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DELETE -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal">
+    <h3>EXCLUIR PROJETO?</h3>
+    <p style="color:var(--text3);margin-bottom:16px">Esta ação não pode ser desfeita.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-delete')">CANCELAR</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">EXCLUIR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser=null,projetos=JSON.parse(localStorage.getItem('agrobase_projetos')||'[]'),materials=[],editingId=null,editMaterialIdx=null,deleteId=null,filterValue='todos',sigCtx={};
+const USERS=[{email:'teste',senha:'12345',nome:'Eng. Demo',initials:'E'}];
+
+function fillDemo(){document.getElementById('login-email').value='teste';document.getElementById('login-senha').value='12345';}
+function doLogin(){
+  const email=document.getElementById('login-email').value.trim(),senha=document.getElementById('login-senha').value;
+  const user=USERS.find(u=>u.email===email&&u.senha===senha);
+  if(!user){showToast('❌ Email ou senha incorretos');return;}
+  currentUser=user;localStorage.setItem('agrobase_user',JSON.stringify(user));
+  document.getElementById('user-name').textContent=user.nome.split(' ')[0];
+  document.getElementById('user-avatar').textContent=user.initials;
+  setGreeting();showScreen('app');showTab('dashboard');renderDashboard();
+}
+function doLogout(){currentUser=null;localStorage.removeItem('agrobase_user');showScreen('login');}
+window.addEventListener('load',()=>{
+  const u=localStorage.getItem('agrobase_user');
+  if(u){currentUser=JSON.parse(u);document.getElementById('user-name').textContent=currentUser.nome.split(' ')[0];document.getElementById('user-avatar').textContent=currentUser.initials;setGreeting();showScreen('app');showTab('dashboard');renderDashboard();}
+});
+function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
+function showTab(tab){
+  document.querySelectorAll('[id^="tab-"]').forEach(t=>t.style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const nav=document.getElementById('nav-'+tab);if(nav)nav.classList.add('active');
+  if(tab==='dashboard')renderDashboard();if(tab==='projetos')renderProjetos();showScreen('app');
+}
+function showNovoProjeto(){editingId=null;materials=[];clearAllFields();goStep(1);showScreen('form');document.getElementById('form-title-label').textContent='NOVO PROJETO';document.getElementById('form-id-label').textContent='';renderMaterials();initSignatures();}
+function voltarApp(){showScreen('app');showTab('dashboard');}
+function setGreeting(){
+  const h=new Date().getHours(),g=h<12?'BOM DIA':h<18?'BOA TARDE':'BOA NOITE',nome=currentUser?.nome?.split(' ')[0]?.toUpperCase()||'ENG.';
+  document.getElementById('dash-greeting').innerHTML=`${g},<br>${nome}`;
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
+}
+function renderDashboard(){
+  document.getElementById('stat-total').textContent=projetos.length;
+  document.getElementById('stat-concluidos').textContent=projetos.filter(p=>p.status==='concluido').length;
+  document.getElementById('stat-rascunhos').textContent=projetos.filter(p=>p.status==='rascunho').length;
+  const cont=document.getElementById('dash-recentes'),recentes=[...projetos].reverse().slice(0,3);
+  if(!recentes.length){cont.innerHTML=`<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg><p>Nenhum projeto ainda</p><small>Toque em NOVO para começar</small></div>`;return;}
+  cont.innerHTML=recentes.map(p=>projCardHTML(p,true)).join('');
+}
+function projCardHTML(p,mini=false){
+  const bc={rascunho:'badge-rascunho',concluido:'badge-concluido',revisao:'badge-revisao'}[p.status]||'badge-rascunho';
+  const sl={rascunho:'RASCUNHO',concluido:'CONCLUÍDO',revisao:'EM REVISÃO'}[p.status]||'RASCUNHO';
+  const actions=mini?'':`<div class="proj-card-actions"><button class="btn btn-secondary btn-sm" onclick="editProjeto('${p.id}');event.stopPropagation()">✏️ EDITAR</button><button class="btn btn-accent2 btn-sm" onclick="exportPDFById('${p.id}');event.stopPropagation()">📄 PDF</button><button class="btn btn-secondary btn-sm" onclick="exportExcelById('${p.id}');event.stopPropagation()">📊 EXCEL</button><button class="btn btn-danger btn-sm" onclick="askDelete('${p.id}');event.stopPropagation()">🗑</button></div>`;
+  return `<div class="proj-card" onclick="editProjeto('${p.id}')"><div class="proj-card-top"><div class="proj-title">${p.especie||'Sem espécie'} — ${p.cultivar||'—'}</div><span class="proj-badge ${bc}">${sl}</span></div><div class="proj-meta"><span>SAFRA: ${p.safra||'—'}</span><span>ÁREA: ${p.area||'—'} ha</span><span>MATS: ${(p.materials||[]).length}</span></div><div class="proj-meta" style="margin-top:4px"><span>${p.municipio||''} ${p.uf||''}</span><span>${p.updatedAt||''}</span></div>${actions}</div>`;
+}
+function setFilter(el,val){filterValue=val;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderProjetos();}
+function renderProjetos(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  let list=[...projetos].reverse();
+  if(filterValue!=='todos')list=list.filter(p=>p.status===filterValue);
+  if(q)list=list.filter(p=>(p.especie||'').toLowerCase().includes(q)||(p.cultivar||'').toLowerCase().includes(q)||(p.safra||'').toLowerCase().includes(q)||(p.produtor||'').toLowerCase().includes(q)||(p.municipio||'').toLowerCase().includes(q));
+  document.getElementById('proj-count-label').textContent=`${list.length} PROJETO(S) ENCONTRADO(S)`;
+  const cont=document.getElementById('projetos-list');
+  if(!list.length){cont.innerHTML=`<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><p>Nenhum resultado</p><small>Tente outro filtro ou busca</small></div>`;return;}
+  cont.innerHTML=list.map(p=>projCardHTML(p,false)).join('');
+}
+function goStep(n){
+  [1,2,3].forEach(i=>{document.getElementById('etapa-'+i).style.display=i===n?'block':'none';const s=document.getElementById('step-'+i);s.className='step'+(i<n?' done':i===n?' active':'');s.querySelector('.step-dot').textContent=i<n?'✓':i;});
+  if(n===3)renderResumo();
+}
+function getGPS(){
+  if(!navigator.geolocation){showToast('GPS não disponível neste dispositivo');return;}
+  showToast('📍 Obtendo localização...');
+  navigator.geolocation.getCurrentPosition(pos=>{document.getElementById('f-gps').value=`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;showToast('📍 Localização obtida!');},()=>showToast('❌ Não foi possível obter GPS'));
+}
+function openMaterialModal(idx=null){
+  editMaterialIdx=idx;const m=idx!==null?materials[idx]:{};
+  document.getElementById('modal-mat-title').textContent=idx!==null?'EDITAR MATERIAL':'ADICIONAR MATERIAL';
+  ['categoria','lote','qtd','origem','nf','nf-data','doc','doc-data','renasem'].forEach(f=>{const el=document.getElementById('m-'+f);if(el)el.value=m[f]||'';});
+  document.getElementById('modal-material').classList.add('open');
+}
+function closeMaterialModal(){document.getElementById('modal-material').classList.remove('open');editMaterialIdx=null;}
+function saveMaterial(){
+  const m={};['categoria','lote','qtd','origem','nf','nf-data','doc','doc-data','renasem'].forEach(f=>{const el=document.getElementById('m-'+f);if(el)m[f]=el.value;});
+  if(!m.lote&&!m.categoria){showToast('Preencha pelo menos Categoria ou Lote');return;}
+  if(editMaterialIdx!==null)materials[editMaterialIdx]=m;else materials.push(m);
+  renderMaterials();closeMaterialModal();showToast('✅ Material salvo');
+}
+function renderMaterials(){
+  const cont=document.getElementById('material-list');
+  if(!materials.length){cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);font-family:var(--font-mono);font-size:12px">Nenhum material adicionado</div>';return;}
+  cont.innerHTML=materials.map((m,i)=>`<div class="material-item"><div class="material-item-info"><strong>${m.categoria||'Material'} — Lote ${m.lote||'—'}</strong><small>${m.qtd||'—'} kg | NF: ${m['nf']||'—'} | RENASEM: ${m.renasem||'—'}</small></div><div class="material-actions"><button class="btn btn-icon btn-sm" onclick="openMaterialModal(${i})">✏️</button><button class="btn btn-danger btn-sm" onclick="removeMaterial(${i})">🗑</button></div></div>`).join('');
+}
+function removeMaterial(i){materials.splice(i,1);renderMaterials();}
+function initSignatures(){
+  ['eng','prod'].forEach(id=>{
+    const canvas=document.getElementById('sig-'+id);if(!canvas)return;
+    canvas.width=canvas.offsetWidth||400;
+    const ctx=canvas.getContext('2d');ctx.strokeStyle='#8FBC45';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';
+    sigCtx[id]={ctx,drawing:false,empty:true};ctx.fillStyle='#1E2C1E';ctx.fillRect(0,0,canvas.width,canvas.height);
+    canvas.addEventListener('mousedown',e=>startDraw(id,e));canvas.addEventListener('mousemove',e=>draw(id,e));canvas.addEventListener('mouseup',()=>stopDraw(id));canvas.addEventListener('mouseleave',()=>stopDraw(id));
+    canvas.addEventListener('touchstart',e=>{e.preventDefault();startDraw(id,e.touches[0]);},{passive:false});canvas.addEventListener('touchmove',e=>{e.preventDefault();draw(id,e.touches[0]);},{passive:false});canvas.addEventListener('touchend',()=>stopDraw(id));
+  });
+}
+function getPos(canvas,e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)};}
+function startDraw(id,e){const c=sigCtx[id];if(!c)return;c.drawing=true;c.empty=false;const p=getPos(document.getElementById('sig-'+id),e);c.ctx.beginPath();c.ctx.moveTo(p.x,p.y);}
+function draw(id,e){const c=sigCtx[id];if(!c||!c.drawing)return;const p=getPos(document.getElementById('sig-'+id),e);c.ctx.lineTo(p.x,p.y);c.ctx.stroke();}
+function stopDraw(id){const c=sigCtx[id];if(c)c.drawing=false;}
+function clearSig(id){const canvas=document.getElementById('sig-'+id);const c=sigCtx[id];if(!c)return;c.ctx.fillStyle='#1E2C1E';c.ctx.fillRect(0,0,canvas.width,canvas.height);c.empty=true;}
+function getSigData(id){const c=sigCtx[id];if(!c||c.empty)return null;return document.getElementById('sig-'+id).toDataURL();}
+function v(id){const el=document.getElementById(id);return el?el.value:'';}
+function collectFormData(){return{safra:v('f-safra'),numero:v('f-numero'),lavoura:v('f-lavoura'),especie:v('f-especie'),cultivar:v('f-cultivar'),categoria:v('f-categoria'),fase:v('f-fase'),produtor:v('f-produtor'),uf:v('f-uf'),municipio:v('f-municipio'),gps:v('f-gps'),area:v('f-area'),plantio:v('f-plantio'),obs:v('f-obs'),engNome:v('f-eng-nome'),engCrea:v('f-eng-crea'),prodNome:v('f-prod-nome'),prodDoc:v('f-prod-doc'),sigEng:getSigData('eng'),sigProd:getSigData('prod'),materials:[...materials]};}
+function setFormData(p){['safra','numero','lavoura','especie','cultivar','categoria','fase','produtor','uf','municipio','gps','area','plantio','obs','engNome','engCrea','prodNome','prodDoc'].forEach((f,i)=>{const ids=['f-safra','f-numero','f-lavoura','f-especie','f-cultivar','f-categoria','f-fase','f-produtor','f-uf','f-municipio','f-gps','f-area','f-plantio','f-obs','f-eng-nome','f-eng-crea','f-prod-nome','f-prod-doc'];const el=document.getElementById(ids[i]);if(el)el.value=p[f]||'';});}
+function clearAllFields(){document.querySelectorAll('#screen-form input, #screen-form select, #screen-form textarea').forEach(el=>el.value='');}
+function saveRascunho(){const data=collectFormData();data.status='rascunho';saveProjeto(data);showToast('💾 Rascunho salvo!');}
+function concluirProjeto(){const data=collectFormData();if(!data.especie){showToast('Preencha ao menos a Espécie');goStep(1);return;}data.status='concluido';saveProjeto(data);showToast('✅ Projeto concluído!');voltarApp();}
+function saveProjeto(data){
+  const now=new Date().toLocaleDateString('pt-BR');
+  if(editingId){const idx=projetos.findIndex(p=>p.id===editingId);if(idx>=0)projetos[idx]={...projetos[idx],...data,updatedAt:now};}
+  else{const id='proj_'+Date.now();projetos.push({id,...data,createdAt:now,updatedAt:now});editingId=id;}
+  localStorage.setItem('agrobase_projetos',JSON.stringify(projetos));
+}
+function editProjeto(id){const p=projetos.find(x=>x.id===id);if(!p)return;editingId=id;materials=[...(p.materials||[])];clearAllFields();setFormData(p);renderMaterials();goStep(1);showScreen('form');document.getElementById('form-title-label').textContent='EDITAR PROJETO';document.getElementById('form-id-label').textContent='ID: '+id;initSignatures();}
+function askDelete(id){deleteId=id;document.getElementById('modal-delete').classList.add('open');}
+function confirmDelete(){projetos=projetos.filter(p=>p.id!==deleteId);localStorage.setItem('agrobase_projetos',JSON.stringify(projetos));closeModal('modal-delete');renderProjetos();renderDashboard();showToast('🗑 Projeto excluído');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function renderResumo(){
+  const d=collectFormData();
+  document.getElementById('resumo-content').innerHTML=`<table style="width:100%;font-size:13px;border-collapse:collapse">${row('Espécie',d.especie)}${row('Cultivar',d.cultivar)}${row('Safra',d.safra)}${row('Categoria',d.categoria)}${row('Fase',d.fase)}${row('Área',d.area?d.area+' ha':'—')}${row('Produtor',d.produtor)}${row('Município',d.municipio+' '+d.uf)}${row('GPS',d.gps)}${row('Plantio',d.plantio)}${row('Materiais',d.materials.length+' cadastrado(s)')}</table>`;
+}
+function row(l,v){return `<tr><td style="padding:6px 0;color:var(--text3);font-family:var(--font-mono);font-size:11px;width:40%">${l}</td><td style="padding:6px 0;font-weight:500">${v||'—'}</td></tr>`;}
+function getProjetoData(){const d=collectFormData();d.id=editingId;return d;}
+function exportPDF(){_exportPDF(getProjetoData());}
+function exportPDFById(id){const p=projetos.find(x=>x.id===id);if(p)_exportPDF(p);}
+function _exportPDF(d){
+  const{jsPDF}=window.jspdf,doc=new jsPDF();
+  doc.setFillColor(15,26,15);doc.rect(0,0,210,40,'F');
+  doc.setFillColor(143,188,69);doc.rect(0,38,210,2,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(28);doc.setTextColor(143,188,69);doc.text('AGROBASE',14,22);
+  doc.setFontSize(9);doc.setTextColor(90,112,85);doc.text('GESTÃO DE CAMPO — LAVOURAS DE SEMENTES',14,30);
+  const now=new Date().toLocaleDateString('pt-BR');
+  doc.text(`DATA: ${now}`,140,15);doc.text(`STATUS: ${(d.status||'RASCUNHO').toUpperCase()}`,140,22);if(d.numero)doc.text(`Nº: ${d.numero}`,140,29);
+  let y=50;
+  function sectionTitle(t){doc.setFillColor(30,44,30);doc.rect(14,y-4,182,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(143,188,69);doc.text(t,17,y+1);y+=10;}
+  function fieldRow(l,v,col=0){doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90,112,85);const x=col===0?14:110;doc.text(l+':',x,y);doc.setTextColor(232,239,216);doc.text(String(v||'—'),x+30,y);if(col===1)y+=7;}
+  doc.setFillColor(22,32,22);doc.rect(14,y-2,182,80,'F');
+  sectionTitle('DADOS GERAIS');
+  fieldRow('Safra',d.safra,0);fieldRow('Número',d.numero,1);fieldRow('Espécie',d.especie,0);fieldRow('Cultivar',d.cultivar,1);fieldRow('Categoria',d.categoria,0);fieldRow('Fase',d.fase,1);fieldRow('Produtor',d.produtor,0);fieldRow('UF',d.uf,1);fieldRow('Município',d.municipio,0);fieldRow('Área',d.area?d.area+' ha':'—',1);fieldRow('GPS',d.gps,0);fieldRow('Plantio',d.plantio,1);y+=4;
+  if(d.materials&&d.materials.length){sectionTitle(`MATERIAIS DE MULTIPLICAÇÃO (${d.materials.length})`);d.materials.forEach((m,i)=>{if(y>270){doc.addPage();y=20;}doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(143,188,69);doc.text(`${i+1}. ${m.categoria||'Material'} — Lote: ${m.lote||'—'}`,14,y);y+=6;doc.setFont('helvetica','normal');doc.setTextColor(200,220,180);doc.text(`Qtd: ${m.qtd||'—'} kg  |  NF: ${m.nf||'—'}  |  RENASEM: ${m.renasem||'—'}`,18,y);y+=8;});}
+  if(d.obs){if(y>260){doc.addPage();y=20;}sectionTitle('OBSERVAÇÕES');doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(200,220,180);const lines=doc.splitTextToSize(d.obs,175);doc.text(lines,14,y);y+=lines.length*6+6;}
+  if(y>230){doc.addPage();y=20;}
+  sectionTitle('ASSINATURAS');doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90,112,85);doc.text('Engenheiro Agrônomo:',14,y);doc.setTextColor(232,239,216);doc.text(d.engNome||'—',14,y+6);doc.text('CREA/CFT: '+(d.engCrea||'—'),14,y+12);doc.text('Produtor:',110,y);doc.setTextColor(232,239,216);doc.text(d.prodNome||'—',110,y+6);doc.text('CPF/CNPJ: '+(d.prodDoc||'—'),110,y+12);y+=22;
+  if(d.sigEng){try{doc.addImage(d.sigEng,'PNG',14,y,70,25);}catch(e){}}
+  if(d.sigProd){try{doc.addImage(d.sigProd,'PNG',110,y,70,25);}catch(e){}}
+  y+=30;doc.setDrawColor(143,188,69);doc.line(14,y,83,y);doc.line(110,y,178,y);
+  doc.setFillColor(15,26,15);doc.rect(0,285,210,15,'F');doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(90,112,85);doc.text('AgroBase — Sistema de Gestão de Campo',14,293);doc.text(`Gerado em ${now}`,160,293);
+  doc.save(`AgroBase_${d.especie||'Projeto'}_${d.safra||'Safra'}.pdf`);showToast('📄 PDF exportado!');
+}
+function exportExcel(){_exportExcel(getProjetoData());}
+function exportExcelById(id){const p=projetos.find(x=>x.id===id);if(p)_exportExcel(p);}
+function _exportExcel(d){
+  const wb=XLSX.utils.book_new();
+  const headers=['NOME DA LAVOURA','COOPERADO','CULTIVAR','AREA','KG SEMENTES','LOTE','CAT P','N CERTIFICADO','DATA CERT','N DANFE','DATA DANFE','FINAL PLANTIO','PROPRIEDADE','MUNICIPIO','COORDENADAS S','COORDENADAS W','OBSERVACAO'];
+  const gps=(d.gps||'').split(',');
+  const coordS=(gps[0]||'').trim();
+  const coordW=(gps[1]||'').trim();
+  const mats=d.materials&&d.materials.length?d.materials:[{}];
+  const rows=mats.map(m=>[
+    d.lavoura||'',
+    d.produtor||'',
+    d.cultivar||'',
+    d.area||'',
+    m.qtd||'',
+    m.lote||'',
+    m.categoria||d.categoria||'',
+    m.doc||'',
+    m['doc-data']||'',
+    m.nf||'',
+    m['nf-data']||'',
+    d.plantio||'',
+    d.municipio||'',
+    d.municipio||'',
+    coordS,
+    coordW,
+    d.obs||''
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=headers.map(()=>({wch:20}));
+  XLSX.utils.book_append_sheet(wb,ws,'COOPERADOS');
+  XLSX.writeFile(wb,`AgroBase_${d.especie||'Projeto'}_${d.safra||'Safra'}.xlsx`);
+  showToast('Planilha exportada!');
+}
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
+document.getElementById('login-senha').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+</script>
+</body>
+</html>
